@@ -735,88 +735,88 @@ impl Globals {
 
         let h = self.heap.as_ref();
         let is_heap = h.is_some();
-        let json = DhatJson {
-            dhatFileVersion: 2,
-            mode: if is_heap { "rust-heap" } else { "rust-ad-hoc" },
-            verb: "Allocated",
-            bklt: is_heap,
-            bkacc: false,
-            bu: if is_heap { None } else { Some("unit") },
-            bsu: if is_heap { None } else { Some("units") },
-            bksu: if is_heap { None } else { Some("events") },
-            tu: "µs",
-            Mtu: "s",
-            tuth: if is_heap { Some(10) } else { None },
-            cmd: std::env::args().collect::<Vec<_>>().join(" "),
-            pid: std::process::id(),
-            tg: h.map(|h| {
-                h.tgmax_instant
-                    .saturating_duration_since(self.start_instant)
-                    .as_micros()
-            }),
-            te: now.duration_since(self.start_instant).as_micros(),
-            pps,
-            ftbl,
-        };
+        // let json = DhatJson {
+        //     dhatFileVersion: 2,
+        //     mode: if is_heap { "rust-heap" } else { "rust-ad-hoc" },
+        //     verb: "Allocated",
+        //     bklt: is_heap,
+        //     bkacc: false,
+        //     bu: if is_heap { None } else { Some("unit") },
+        //     bsu: if is_heap { None } else { Some("units") },
+        //     bksu: if is_heap { None } else { Some("events") },
+        //     tu: "µs",
+        //     Mtu: "s",
+        //     tuth: if is_heap { Some(10) } else { None },
+        //     cmd: std::env::args().collect::<Vec<_>>().join(" "),
+        //     pid: std::process::id(),
+        //     tg: h.map(|h| {
+        //         h.tgmax_instant
+        //             .saturating_duration_since(self.start_instant)
+        //             .as_micros()
+        //     }),
+        //     te: now.duration_since(self.start_instant).as_micros(),
+        //     pps,
+        //     ftbl,
+        // };
 
-        eprintln!(
-            "dhat: Total:     {} {} in {} {}",
-            self.total_bytes.separate_with_commas(),
-            json.bsu.unwrap_or("bytes"),
-            self.total_blocks.separate_with_commas(),
-            json.bksu.unwrap_or("blocks"),
-        );
-        if let Some(h) = &self.heap {
-            eprintln!(
-                "dhat: At t-gmax: {} bytes in {} blocks",
-                h.max_bytes.separate_with_commas(),
-                h.max_blocks.separate_with_commas(),
-            );
-            eprintln!(
-                "dhat: At t-end:  {} bytes in {} blocks",
-                h.curr_bytes.separate_with_commas(),
-                h.curr_blocks.separate_with_commas(),
-            );
-        }
+        // eprintln!(
+        //     "dhat: Total:     {} {} in {} {}",
+        //     self.total_bytes.separate_with_commas(),
+        //     json.bsu.unwrap_or("bytes"),
+        //     self.total_blocks.separate_with_commas(),
+        //     json.bksu.unwrap_or("blocks"),
+        // );
+        // if let Some(h) = &self.heap {
+        //     eprintln!(
+        //         "dhat: At t-gmax: {} bytes in {} blocks",
+        //         h.max_bytes.separate_with_commas(),
+        //         h.max_blocks.separate_with_commas(),
+        //     );
+        //     eprintln!(
+        //         "dhat: At t-end:  {} bytes in {} blocks",
+        //         h.curr_bytes.separate_with_commas(),
+        //         h.curr_blocks.separate_with_commas(),
+        //     );
+        // }
 
-        if let Some(memory_output) = memory_output {
-            // Default pretty printing is fine here, it's only used for small
-            // tests.
-            *memory_output = serde_json::to_string_pretty(&json).unwrap();
-            eprintln!("dhat: The data has been saved to the memory buffer");
-        } else {
-            let write = || -> std::io::Result<()> {
-                let buffered_file = BufWriter::new(File::create(&self.file_name)?);
-                // `to_writer` produces JSON that is compact.
-                // `to_writer_pretty` produces JSON that is readable. This code
-                // gives us JSON that is fairly compact and fairly readable.
-                // Ideally it would be more like what DHAT produces, e.g. one
-                // space indents, no spaces after `:` and `,`, and `fs` arrays
-                // on a single line, but this is as good as we can easily
-                // achieve.
-                let formatter = serde_json::ser::PrettyFormatter::with_indent(b"");
-                let mut ser = serde_json::Serializer::with_formatter(buffered_file, formatter);
-                json.serialize(&mut ser)?;
-                Ok(())
-            };
-            match write() {
-                Ok(()) => eprintln!(
-                    "dhat: The data has been saved to {}, and is viewable with dhat/dh_view.html",
-                    self.file_name.to_string_lossy()
-                ),
-                Err(e) => eprintln!(
-                    "dhat: error: Writing to {} failed: {}",
-                    self.file_name.to_string_lossy(),
-                    e
-                ),
-            }
-        }
-        if self.eprint_json {
-            eprintln!(
-                "dhat: json = `{}`",
-                serde_json::to_string_pretty(&json).unwrap()
-            );
-        }
+        // if let Some(memory_output) = memory_output {
+        //     // Default pretty printing is fine here, it's only used for small
+        //     // tests.
+        //     *memory_output = serde_json::to_string_pretty(&json).unwrap();
+        //     eprintln!("dhat: The data has been saved to the memory buffer");
+        // } else {
+        //     let write = || -> std::io::Result<()> {
+        //         let buffered_file = BufWriter::new(File::create(&self.file_name)?);
+        //         // `to_writer` produces JSON that is compact.
+        //         // `to_writer_pretty` produces JSON that is readable. This code
+        //         // gives us JSON that is fairly compact and fairly readable.
+        //         // Ideally it would be more like what DHAT produces, e.g. one
+        //         // space indents, no spaces after `:` and `,`, and `fs` arrays
+        //         // on a single line, but this is as good as we can easily
+        //         // achieve.
+        //         let formatter = serde_json::ser::PrettyFormatter::with_indent(b"");
+        //         let mut ser = serde_json::Serializer::with_formatter(buffered_file, formatter);
+        //         json.serialize(&mut ser)?;
+        //         Ok(())
+        //     };
+        //     match write() {
+        //         Ok(()) => eprintln!(
+        //             "dhat: The data has been saved to {}, and is viewable with dhat/dh_view.html",
+        //             self.file_name.to_string_lossy()
+        //         ),
+        //         Err(e) => eprintln!(
+        //             "dhat: error: Writing to {} failed: {}",
+        //             self.file_name.to_string_lossy(),
+        //             e
+        //         ),
+        //     }
+        // }
+        // if self.eprint_json {
+        //     eprintln!(
+        //         "dhat: json = `{}`",
+        //         serde_json::to_string_pretty(&json).unwrap()
+        //     );
+        // }
     }
 }
 
